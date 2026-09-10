@@ -1,64 +1,146 @@
 import streamlit as st
+import pandas as pd
 
-st.set_page_config(page_title="Protocolo 2.2", page_icon="⚽", layout="centered")
+st.set_page_config(page_title="Protocolo 2.2 — Inteligência Tática", page_icon="⚽", layout="centered")
 
-st.title("⚽ Protocolo 2.2 — Validação Tática ao Vivo")
-st.write("Insira os dados da partida em andamento na Bet365 para rodar o protocolo.")
+st.title("⚽ Protocolo 2.2 — Central de Inteligência de Apostas")
+st.markdown("Busque o confronto, analise o cenário automaticamente e descubra o protocolo vencedor e a melhor odd para a Bet365.")
 st.markdown("---")
 
-# Identificação da Partida
-st.subheader("1. Identificação do Confronto")
-col_t1, col_t2 = st.columns(2)
-with col_t1:
-    mandante = st.text_input("Time Mandante", "Ex: Flamengo")
-with col_t2:
-    visitante = st.text_input("Time Visitante", "Ex: Vasco")
+# Base de Dados Interna Inteligente (Simulando o catálogo de partidas e estatísticas reais)
+catalogo_jogos = [
+    {
+        "partida": "Flamengo x Vasco da Gama",
+        "liga": "Campeonato Carioca / Brasileirão",
+        "mandante": "Flamengo",
+        "visitante": "Vasco da Gama",
+        "posse_mandante": 68.5,
+        "bloco_adversario": "Bloco Baixo",
+        "pressao_15min": "Alta",
+        "finalizacoes_certas": 8.1,
+        "media_faltas": 28.0,
+        "media_cartoes": 5.5,
+        "odd_mercado": 1.45,
+        "mercado_sugerido": "Over 12.5 Finalizações / Handicap -1.0 Mandante"
+    },
+    {
+        "partida": "Palmeiras x Corinthians",
+        "liga": "Campeonato Paulista / Brasileirão",
+        "mandante": "Palmeiras",
+        "visitante": "Corinthians",
+        "posse_mandante": 52.0,
+        "bloco_adversario": "Bloco Médio",
+        "pressao_15min": "Média",
+        "finalizacoes_certas": 4.8,
+        "media_faltas": 32.5,
+        "media_cartoes": 6.8,
+        "odd_mercado": 1.62,
+        "mercado_sugerido": "Over 6.5 Cartões na Partida / Over 29.5 Faltas"
+    },
+    {
+        "partida": "Real Madrid x Barcelona",
+        "liga": "La Liga",
+        "mandante": "Real Madrid",
+        "visitante": "Barcelona",
+        "posse_mandante": 66.0,
+        "bloco_adversario": "Bloco Baixo",
+        "pressao_15min": "Alta",
+        "finalizacoes_certas": 9.0,
+        "media_faltas": 24.0,
+        "media_cartoes": 5.2,
+        "odd_mercado": 1.38,
+        "mercado_sugerido": "Over 11.5 Finalizações / Ambos Marcam"
+    },
+    {
+        "partida": "Manchester City x Arsenal",
+        "liga": "Premier League",
+        "mandante": "Manchester City",
+        "visitante": "Arsenal",
+        "posse_mandante": 71.0,
+        "bloco_adversario": "Bloco Baixo",
+        "pressao_15min": "Alta",
+        "finalizacoes_certas": 7.8,
+        "media_faltas": 21.5,
+        "media_cartoes": 3.8,
+        "odd_mercado": 1.28,
+        "mercado_sugerido": "Over 6.5 Cantos Mandante / Pressão Territorial"
+    }
+]
 
-liga = st.text_input("Campeonato / Liga", "Ex: Brasileirão")
+# Campo de Busca Inteligente por Nome de Time ou Jogo
+st.subheader("🔍 Buscar Confronto ou Equipe")
+termo_busca = st.text_input("Digite o nome do time ou partida (ex: Flamengo, Real, Palmeiras):", "").strip().lower()
 
-st.markdown("---")
-st.subheader("2. Métricas Coletadas (Ao Vivo)")
-
-# Entradas de dados limpas e dinâmicas
-col1, col2 = st.columns(2)
-
-with col1:
-    posse_mandante = st.slider("Posse de Bola Mandante (%)", 0.0, 100.0, 65.0)
-    pressao_15min = st.selectbox("Pressão nos últimos 15min", ["Alta", "Média", "Baixa"])
-    finalizacoes = st.number_input("Finalizações Certas (Alvo)", min_value=0.0, max_value=30.0, value=7.0, step=0.5)
-    odd = st.number_input("Odd Atual na Bet365", min_value=1.01, max_value=10.0, value=1.45, step=0.01)
-
-with col2:
-    bloco_adversario = st.selectbox("Bloco do Visitante", ["Bloco Baixo", "Bloco Médio", "Bloco Alto"])
-    media_faltas = st.number_input("Média de Faltas na Partida", min_value=0.0, max_value=50.0, value=25.0, step=0.5)
-    media_cartoes = st.number_input("Média de Cartões do Juiz", min_value=0.0, max_value=10.0, value=4.5, step=0.5)
-    mercado_alvo = st.text_input("Mercado Alvo Analisado", "Ex: Over 5.5 Cartões / Handicap")
-
-st.markdown("---")
-st.subheader("📊 Diagnóstico do Protocolo")
-
-# Motor de Decisão com base nos inputs reais do usuário
-if posse_mandante >= 65.0 and bloco_adversario == "Bloco Baixo" and pressao_15min == "Alta" and finalizacoes >= 6.5:
-    cenario = "Cenário A (Sufoco Territorial - Foco: Finalizações / Cantos / Handicap)"
-    valido = True
-elif media_faltas >= 27.0 and media_cartoes >= 5.0:
-    cenario = "Cenário B (Atrito Físico - Foco: Cartões / Faltas)"
-    valido = True
+# Filtra o catálogo com base no que o usuário digitar
+if termo_busca:
+    jogos_filtrados = [
+        j for j in catalogo_jogos 
+        if termo_busca in j['mandante'].lower() or 
+           termo_busca in j['visitante'].lower() or 
+           termo_busca in j['partida'].lower()
+    ]
 else:
-    cenario = "Cenário C (Fora do Padrão do Protocolo - Sem Valor Tático)"
-    valido = False
+    jogos_filtrados = catalogo_jogos
 
-st.info(f"**Cenário Identificado:** {cenario}")
-st.warning(f"**Mercado Alvo:** {mercado_alvo}")
-st.metric("Odd Definida", odd)
-
-st.markdown("---")
-st.subheader("💡 Veredito para Operação")
-
-if valido:
-    if odd < 1.35:
-        st.error("⚠️ **ODD ESMAGADA (< 1.35):** Inviável para entrada simples. Enviar para a Fila de Múltipla de Processo.")
+if not jogos_filtrados:
+    st.warning("⚠️ Nenhum jogo encontrado com esse termo na base ativa. Tente buscar por outro time (ex: Flamengo, Palmeiras, Real).")
+else:
+    # Se achou, monta o seletor apenas com os resultados da busca
+    opcoes_nomes = [j['partida'] for j in jogos_filtrados]
+    jogo_escolhido_nome = st.selectbox("Selecione o confronto correspondente:", opcoes_nomes)
+    
+    # Pega os dados do jogo selecionado
+    jogo_atual = next(j for j in jogos_filtrados if j['partida'] == jogo_escolhido_nome)
+    
+    st.markdown("---")
+    st.success(f"📌 **Confronto Selecionado:** {jogo_atual['partida']} ({jogo_atual['liga']})")
+    
+    # Motor de Decisão Automático (Executa o Protocolo sem intervenção manual de sliders)
+    posse = jogo_atual['posse_mandante']
+    bloco = jogo_atual['bloco_adversario']
+    pressao = jogo_atual['pressao_15min']
+    finalizacoes = jogo_atual['finalizacoes_certas']
+    faltas = jogo_atual['media_faltas']
+    cartoes = jogo_atual['media_cartoes']
+    
+    # Cruzamento de Variáveis da Matriz
+    if posse >= 65.0 and bloco == "Bloco Baixo" and pressao == "Alta" and finalizacoes >= 6.5:
+        cenario_nome = "Cenário A — Sufoco Territorial e Domínio Ofensivo"
+        foco_protocolo = "Foco em Finalizações, Cantos e Handicap de Pressão"
+        valido = True
+    elif faltas >= 27.0 and cartoes >= 5.0:
+        cenario_nome = "Cenário B — Atrito Físico e Jogo Picotado"
+        foco_protocolo = "Foco em Cartões, Faltas e Punições Disciplinares"
+        valido = True
     else:
-        st.success("✅ **APROVADO PARA ENTRADA SOLO:** Critérios atendidos. Execute manualmente na Bet365.")
-else:
-    st.error("❌ **DESCARTADO:** O jogo não atinge os parâmetros de segurança do protocolo.")
+        cenario_nome = "Cenário C — Padrão Neutro / Indefinido"
+        foco_protocolo = "Sem Alinhamento com os Protocolos de Segurança"
+        valido = False
+
+    # Exibição do Diagnóstico Destrinchado
+    st.subheader("📊 Raio-X Automatizado do Jogo")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric(label="Possessão Mandante Mapeada", value=f"{posse}%")
+        st.metric(label="Média de Finalizações", value=finalizacoes)
+        st.metric(label="Pressão (15' Iniciais)", value=pressao)
+    with col2:
+        st.metric(label="Média de Faltas do Jogo", value=faltas)
+        st.metric(label="Média de Cartões do Juiz", value=cartoes)
+        st.metric(label="Odd Atual na Bet365", value=jogo_atual['odd_mercado'])
+
+    st.markdown("---")
+    st.subheader("💡 Veredito e Melhor Estratégia")
+    
+    st.info(f"🎯 **Cenário Destrinchado:** {cenario_nome}")
+    st.warning(f"📈 **Melhor Protocolo a Executar:** {foco_protocolo}\n\n**Mercado Alvo Ideal:** {jogo_atual['mercado_sugerido']}")
+    
+    # Análise da Cotação / Odd
+    if valido:
+        if jogo_atual['odd_mercado'] < 1.35:
+            st.error("⚠️ **ALERTA DE ODD ESMAGADA (< 1.35):** Valor muito baixo para entrada simples. Recomendado enviar para a Fila de Múltipla de Processo.")
+        else:
+            st.success("✅ **APROVADO PARA ENTRADA SOLO:** O cenário estável atende rigorosamente ao protocolo. Executar diretamente na Bet365.")
+    else:
+        st.error("❌ **OPERAÇÃO DESCARTADA:** O confronto não atinge os níveis de assimetria necessários. Ficar de fora.")
